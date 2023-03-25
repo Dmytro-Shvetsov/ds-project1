@@ -3,26 +3,32 @@ syntax = "proto3";
 
 service TicTacToe{
     rpc StartGame(InitParams) returns (ElectionResponse);
+    rpc NotifyLeader(LeaderID) returns (SuccessResponse);
     rpc SetSymbol(Symbol) returns (SymbolResponse);
     rpc ListBoard(Board) returns (BoardResponse);
-    rpc SetNodeTime(NodeTime) returns (NodeTimeResponse);
     rpc SetLeader(Leader) returns (LeaderResponse);
     rpc SetTimeOut(TimeOut) returns (TimeoutResponse);
+    rpc RequestTime(Empty) returns (NodeTime);
+    rpc SetTimeDiff(TimeDiff) returns (Empty);
 }
 
-message InitParams{
-    int32 n_nodes = 1;
-    int32 node_id = 2;
-    string node_time = 3;
-    bool isLeader = 4;
-    repeated int32 list_ids = 5;
+message Empty {}
 
+message InitParams{
+    repeated int32 list_ids = 1;
 }
 
 message ElectionResponse{
     int32 leader_id = 1;
-    bool isComplete = 2;
-    string leader_time = 3;
+    string leader_time = 2;
+}
+
+message LeaderID{
+    int32 leader_id = 1;
+}
+
+message SuccessResponse{
+    bool isComplete = 1;
 }
 
 message Symbol{
@@ -52,9 +58,8 @@ message NodeTime{
     int32 node_id = 2;
 }
 
-message NodeTimeResponse{
-    string master_time = 1;
-    bool isComplete = 2;
+message TimeDiff{
+    double total_time_seconds = 1;
 }
 
 message Leader{
