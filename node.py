@@ -6,14 +6,41 @@ import grpc
 import time
 from concurrent import futures
 import sys
+import datetime 
 
 BASE_PORT = 50060
 
 class TicTacToeServicer(node_pb2_grpc.TicTacToeServicer):
     def StartGame(self, request, context):
-        print("game started", request)
-        return node_pb2.ElectionResponse(leader_id=0, isComplete=True, leader_time='')
+        n_nodes = request.n_nodes
+        node_id = request.node_id
+        node_time = request.node_time
+        isLeader = request.isLeader
+        ids = request.list_ids
 
+        if node_id in ids:
+            print("Ring is complete. Choosing leader ....")
+            leader_id = max(ids)
+            isLeader = True
+            leader_time = datetime.datetime.utcnow().isoformat()
+            n_players = 2
+            for i in range(n_players):
+                with grpc.insecure_channel(f"localhost:{(leader_id + i - BASE_PORT + 1) % n_nodes + BASE_PORT}"):
+                     return node_pb2.ElectionResponse(leader_id= leader_id, isComplete = isLeader, leader_time= leader_time)
+        
+        if node_id not in ids:
+            ids.append(node_id)
+            isLeader = False
+            print("Collected current ID. Moving to the next node ....")
+            next_node_id = (node_id - BASE_PORT + 1) % n_nodes + BASE_PORT
+            with grpc.insecure_channel(f"localhost:{next_node_id}") as channel:
+                stub = node_pb2_grpc.RingElectionStub(channel)
+                response = stub.Election(node_pb2.InitParams(n_nodes= n_nodes, 
+                                                             node_id= next_node_id, 
+                                                             node_time= node_time, 
+                                                             isLeader= isLeader,
+                                                             list_ids=ids))
+                return response
 
 class Main(cmd.Cmd):
     prompt = '> '
@@ -26,7 +53,7 @@ class Main(cmd.Cmd):
     def do_Start_game(self, args):
         with grpc.insecure_channel(f"localhost:{BASE_PORT + 1}") as channel:
             stub = node_pb2_grpc.TicTacToeStub(channel)
-            request = node_pb2.InitParams(n_nodes=0, node_id=0,node_time='', isLeader=True, list_ids=[])
+            request = node_pb2.InitParams(n_nodes=0, node_id=0, node_time='', isLeader=True, list_ids=[])
             response = stub.StartGame(request)
             print("Game started")
             return response
