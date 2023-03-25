@@ -11,6 +11,9 @@ import datetime
 BASE_PORT = 50060
 
 class TicTacToeServicer(node_pb2_grpc.TicTacToeServicer):
+    def __init__(self, node_id) -> None:
+        self.node_id = node_id
+
     def StartGame(self, request, context):
         n_nodes = request.n_nodes
         node_id = request.node_id
@@ -50,6 +53,9 @@ class Main(cmd.Cmd):
         self.node_id = node_id
         self.prompt = f'Node-{node_id}> '
 
+        self.channel = grpc.insecure_channel(f"localhost:{BASE_PORT + 1}")
+        self.stub = node_pb2_grpc.TicTacToeStub(self.channel)
+
     def do_Start_game(self, args):
         with grpc.insecure_channel(f"localhost:{BASE_PORT + 1}") as channel:
             stub = node_pb2_grpc.TicTacToeStub(channel)
@@ -57,6 +63,10 @@ class Main(cmd.Cmd):
             response = stub.StartGame(request)
             print("Game started")
             return response
+        request = node_pb2.InitParams(n_nodes=0, node_id=0,node_time='', isLeader=True, list_ids=[])
+        response = self.stub.StartGame(request)
+        print("Game started")
+        return response
 
     def do_Set_symbol(self, args):
         print("Symbol set")
@@ -75,7 +85,7 @@ if __name__ == '__main__':
     node_id = int(sys.argv[1])
     run_port = BASE_PORT + node_id
     server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
-    node_pb2_grpc.add_TicTacToeServicer_to_server(TicTacToeServicer(), server)
+    node_pb2_grpc.add_TicTacToeServicer_to_server(TicTacToeServicer(node_id), server)
     server.add_insecure_port(f'[::]:{run_port}')
     server.start()
     print(f"Node started on port {run_port}")
