@@ -34,11 +34,6 @@ class TicTacToeStub(object):
                 request_serializer=node__pb2.Board.SerializeToString,
                 response_deserializer=node__pb2.BoardResponse.FromString,
                 )
-        self.SetNodeTime = channel.unary_unary(
-                '/TicTacToe/SetNodeTime',
-                request_serializer=node__pb2.NodeTime.SerializeToString,
-                response_deserializer=node__pb2.NodeTimeResponse.FromString,
-                )
         self.SetLeader = channel.unary_unary(
                 '/TicTacToe/SetLeader',
                 request_serializer=node__pb2.Leader.SerializeToString,
@@ -48,6 +43,16 @@ class TicTacToeStub(object):
                 '/TicTacToe/SetTimeOut',
                 request_serializer=node__pb2.TimeOut.SerializeToString,
                 response_deserializer=node__pb2.TimeoutResponse.FromString,
+                )
+        self.RequestTime = channel.unary_unary(
+                '/TicTacToe/RequestTime',
+                request_serializer=node__pb2.Empty.SerializeToString,
+                response_deserializer=node__pb2.NodeTime.FromString,
+                )
+        self.SetTimeDiff = channel.unary_unary(
+                '/TicTacToe/SetTimeDiff',
+                request_serializer=node__pb2.TimeDiff.SerializeToString,
+                response_deserializer=node__pb2.Empty.FromString,
                 )
 
 
@@ -78,12 +83,6 @@ class TicTacToeServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
-    def SetNodeTime(self, request, context):
-        """Missing associated documentation comment in .proto file."""
-        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
-        context.set_details('Method not implemented!')
-        raise NotImplementedError('Method not implemented!')
-
     def SetLeader(self, request, context):
         """Missing associated documentation comment in .proto file."""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
@@ -91,6 +90,18 @@ class TicTacToeServicer(object):
         raise NotImplementedError('Method not implemented!')
 
     def SetTimeOut(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def RequestTime(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def SetTimeDiff(self, request, context):
         """Missing associated documentation comment in .proto file."""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
@@ -119,11 +130,6 @@ def add_TicTacToeServicer_to_server(servicer, server):
                     request_deserializer=node__pb2.Board.FromString,
                     response_serializer=node__pb2.BoardResponse.SerializeToString,
             ),
-            'SetNodeTime': grpc.unary_unary_rpc_method_handler(
-                    servicer.SetNodeTime,
-                    request_deserializer=node__pb2.NodeTime.FromString,
-                    response_serializer=node__pb2.NodeTimeResponse.SerializeToString,
-            ),
             'SetLeader': grpc.unary_unary_rpc_method_handler(
                     servicer.SetLeader,
                     request_deserializer=node__pb2.Leader.FromString,
@@ -133,6 +139,16 @@ def add_TicTacToeServicer_to_server(servicer, server):
                     servicer.SetTimeOut,
                     request_deserializer=node__pb2.TimeOut.FromString,
                     response_serializer=node__pb2.TimeoutResponse.SerializeToString,
+            ),
+            'RequestTime': grpc.unary_unary_rpc_method_handler(
+                    servicer.RequestTime,
+                    request_deserializer=node__pb2.Empty.FromString,
+                    response_serializer=node__pb2.NodeTime.SerializeToString,
+            ),
+            'SetTimeDiff': grpc.unary_unary_rpc_method_handler(
+                    servicer.SetTimeDiff,
+                    request_deserializer=node__pb2.TimeDiff.FromString,
+                    response_serializer=node__pb2.Empty.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
@@ -213,23 +229,6 @@ class TicTacToe(object):
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 
     @staticmethod
-    def SetNodeTime(request,
-            target,
-            options=(),
-            channel_credentials=None,
-            call_credentials=None,
-            insecure=False,
-            compression=None,
-            wait_for_ready=None,
-            timeout=None,
-            metadata=None):
-        return grpc.experimental.unary_unary(request, target, '/TicTacToe/SetNodeTime',
-            node__pb2.NodeTime.SerializeToString,
-            node__pb2.NodeTimeResponse.FromString,
-            options, channel_credentials,
-            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
-
-    @staticmethod
     def SetLeader(request,
             target,
             options=(),
@@ -260,5 +259,39 @@ class TicTacToe(object):
         return grpc.experimental.unary_unary(request, target, '/TicTacToe/SetTimeOut',
             node__pb2.TimeOut.SerializeToString,
             node__pb2.TimeoutResponse.FromString,
+            options, channel_credentials,
+            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+
+    @staticmethod
+    def RequestTime(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(request, target, '/TicTacToe/RequestTime',
+            node__pb2.Empty.SerializeToString,
+            node__pb2.NodeTime.FromString,
+            options, channel_credentials,
+            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+
+    @staticmethod
+    def SetTimeDiff(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(request, target, '/TicTacToe/SetTimeDiff',
+            node__pb2.TimeDiff.SerializeToString,
+            node__pb2.Empty.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)

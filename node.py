@@ -6,53 +6,74 @@ import grpc
 import time
 from concurrent import futures
 import sys
-import datetime 
+from datetime import datetime, timedelta
 
-BASE_PORT = 50060
+BASE_PORT = 50051
 
 class TicTacToeServicer(node_pb2_grpc.TicTacToeServicer):
     def __init__(self, node_id) -> None:
         self.node_id = node_id
         self.leader_id = None
+        self.channels = {i:grpc.insecure_channel(f"localhost:{BASE_PORT + i}") for i in range(3) if i != node_id}
+        self.stubs = {i:node_pb2_grpc.TicTacToeStub(self.channels[i]) for i in range(3) if i != node_id}
+        self.clock_adjust = timedelta(0)
 
     def StartGame(self, request, context):
         #retrive current state of node
-        n_nodes = request.n_nodes
-        node_id = request.node_id
-        node_time = request.node_time
-        isLeader = request.isLeader
         ids = request.list_ids
         #if node port in list -> loop is completed and we can select a leader
         if node_id in ids:
-            print("Ring is complete. Choosing leader ....")
             leader_id = max(ids)
-            print(f"Leader is on port {leader_id}")
-            isLeader = True
-            leader_time = datetime.datetime.utcnow().isoformat()
-            return node_pb2.ElectionResponse(leader_id= leader_id, isComplete = isLeader, leader_time= leader_time)
-        #if not -> we append the port of the current node to the list. Pass this list to the next node.
-        if node_id not in ids:
+            print(f"Ring is complete. Choosing leader {leader_id}")
+            leader_time = datetime.utcnow().isoformat()
+            return node_pb2.ElectionResponse(leader_id=leader_id, leader_time=leader_time)
+        else:
+            #if not -> we append the port of the current node to the list. Pass this list to the next node.
             ids.append(node_id)
-            isLeader = False
             print("Collected current ID. Moving to the next node ....")
-            next_node_id = (node_id - BASE_PORT + 1) % n_nodes + BASE_PORT
+            next_node_id = (self.node_id + 1) % 3
             #connecting to the next node, pass the list of ids
-            with grpc.insecure_channel(f"localhost:{next_node_id}") as channel:
-                stub = node_pb2_grpc.TicTacToeStub(channel)
-                response = stub.StartGame(node_pb2.InitParams(n_nodes= n_nodes, 
-                                                             node_id= next_node_id, 
-                                                             node_time= node_time, 
-                                                             isLeader= isLeader,
-                                                             list_ids=ids))
-                return response
+            response = self.stubs[next_node_id].StartGame(node_pb2.InitParams(list_ids=ids))
+            return response
 
     def NotifyLeader(self, request, context):
         self.leader_id = request.leader_id
         print(f"I know that leader id is {self.leader_id}")
+        if self.leader_id == self.node_id:
+            self.synchronize_clocks()
 
-        return node_pb2.SuccessResponse(isComplete= True)
+        return node_pb2.SuccessResponse(isComplete=True)
 
-        
+    def RequestTime(self, request, context):
+        return node_pb2.NodeTime(node_time=(datetime.utcnow() + self.clock_adjust).isoformat(), node_id=self.node_id)
+
+    def SetTimeDiff(self, request, context):
+        self.clock_adjust = timedelta(seconds=request.total_time_seconds)
+        print(f'#{self.node_id} synchronizing time with the server. Time diff seconds: {self.clock_adjust.total_seconds()}')
+        return node_pb2.Empty()
+
+    def synchronize_clocks(self):
+        diffs = self._get_time_diffs()
+        average_diff = sum(diffs, timedelta(0)).total_seconds() / len(diffs)
+        for i, stub in self.stubs.items():
+            print(f'Synchronizing time of node {i}. Time diff: {average_diff}')
+            stub.SetTimeDiff(node_pb2.TimeDiff(total_time_seconds=average_diff))
+
+    def _get_time_diffs(self):
+        diffs = []
+        for i in range(3):
+            if i == self.node_id:
+                continue
+            now = datetime.utcnow()
+            start_clock = time.perf_counter()
+            dest_time = self.stubs[i].RequestTime(node_pb2.Empty())
+            rtt = time.perf_counter() - start_clock
+            diff = now - datetime.fromisoformat(dest_time.node_time) + timedelta(seconds=(rtt / 2))
+            print(f'Time difference with node {i}: {diff.total_seconds()}')
+            diffs.append(diff)
+        return diffs
+
+
 class Main(cmd.Cmd):
     prompt = '> '
 
@@ -60,24 +81,20 @@ class Main(cmd.Cmd):
         super().__init__(*args, **kwargs)
         self.node_id = node_id
         self.prompt = f'Node-{node_id}> '
-        self.channels = {i:grpc.insecure_channel(f"localhost:{BASE_PORT + i}") for i in range(0, 3) if i != node_id}
-        self.stubs = {i:node_pb2_grpc.TicTacToeStub(self.channels[i]) for i in range(0, 3) if i != node_id}
+        self.channels = {i:grpc.insecure_channel(f"localhost:{BASE_PORT + i}") for i in range(3)}
+        self.stubs = {i:node_pb2_grpc.TicTacToeStub(self.channels[i]) for i in range(3)}
 
     def do_Start_game(self, args):
         #After we Start_game, connect to the BASE_PORT(50060)(to yourself) and initiate election
-        with grpc.insecure_channel(f"localhost:{self.node_id + BASE_PORT}") as channel:
-            stub = node_pb2_grpc.TicTacToeStub(channel)
-            request = node_pb2.InitParams(n_nodes=3, node_id=self.node_id + BASE_PORT, node_time='', isLeader=False, list_ids=[])
-            response = stub.StartGame(request)
-            #When the circle is completed, present a new leader
-            if response.isComplete == True:
-                print(f"Now I know that the leader is {response.leader_id}")
-                print(f"Leader time is {response.leader_time}")
-            print("Game started")
+        request = node_pb2.InitParams(list_ids=[])
+        response = self.stubs[self.node_id].StartGame(request)
+        #When the circle is completed, present a new leader
+        print(f"Now I know that the leader is {response.leader_id}. Leader time is {response.leader_time}")
+        print("Game started")
 
-            for k, v in self.stubs.items():
-                v.NotifyLeader(node_pb2.LeaderID(leader_id= response.leader_id))
-            return response
+        for k, v in self.stubs.items():
+            v.NotifyLeader(node_pb2.LeaderID(leader_id=response.leader_id))
+        return response
 
     def do_Set_symbol(self, args):
         print("Symbol set")
@@ -107,6 +124,5 @@ if __name__ == '__main__':
         try:
             cli.cmdloop()
         except Exception as exc:
-            print(exc)
             server.stop(0)
-    
+            raise exc
