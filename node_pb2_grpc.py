@@ -34,6 +34,16 @@ class TicTacToeStub(object):
                 request_serializer=node__pb2.NodeTime.SerializeToString,
                 response_deserializer=node__pb2.NodeTimeResponse.FromString,
                 )
+        self.SetLeader = channel.unary_unary(
+                '/TicTacToe/SetLeader',
+                request_serializer=node__pb2.Leader.SerializeToString,
+                response_deserializer=node__pb2.LeaderResponse.FromString,
+                )
+        self.SetTimeOut = channel.unary_unary(
+                '/TicTacToe/SetTimeOut',
+                request_serializer=node__pb2.TimeOut.SerializeToString,
+                response_deserializer=node__pb2.TimeoutResponse.FromString,
+                )
 
 
 class TicTacToeServicer(object):
@@ -63,6 +73,18 @@ class TicTacToeServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
+    def SetLeader(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def SetTimeOut(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
 
 def add_TicTacToeServicer_to_server(servicer, server):
     rpc_method_handlers = {
@@ -85,6 +107,16 @@ def add_TicTacToeServicer_to_server(servicer, server):
                     servicer.SetNodeTime,
                     request_deserializer=node__pb2.NodeTime.FromString,
                     response_serializer=node__pb2.NodeTimeResponse.SerializeToString,
+            ),
+            'SetLeader': grpc.unary_unary_rpc_method_handler(
+                    servicer.SetLeader,
+                    request_deserializer=node__pb2.Leader.FromString,
+                    response_serializer=node__pb2.LeaderResponse.SerializeToString,
+            ),
+            'SetTimeOut': grpc.unary_unary_rpc_method_handler(
+                    servicer.SetTimeOut,
+                    request_deserializer=node__pb2.TimeOut.FromString,
+                    response_serializer=node__pb2.TimeoutResponse.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
@@ -161,5 +193,39 @@ class TicTacToe(object):
         return grpc.experimental.unary_unary(request, target, '/TicTacToe/SetNodeTime',
             node__pb2.NodeTime.SerializeToString,
             node__pb2.NodeTimeResponse.FromString,
+            options, channel_credentials,
+            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+
+    @staticmethod
+    def SetLeader(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(request, target, '/TicTacToe/SetLeader',
+            node__pb2.Leader.SerializeToString,
+            node__pb2.LeaderResponse.FromString,
+            options, channel_credentials,
+            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+
+    @staticmethod
+    def SetTimeOut(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(request, target, '/TicTacToe/SetTimeOut',
+            node__pb2.TimeOut.SerializeToString,
+            node__pb2.TimeoutResponse.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)

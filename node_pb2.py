@@ -13,7 +13,7 @@ _sym_db = _symbol_database.Default()
 
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\nnode.proto\"e\n\nInitParams\x12\x0f\n\x07n_nodes\x18\x01 \x01(\x05\x12\x0f\n\x07node_id\x18\x02 \x01(\x05\x12\x11\n\tnode_time\x18\x03 \x01(\t\x12\x10\n\x08isLeader\x18\x04 \x01(\x08\x12\x10\n\x08list_ids\x18\x05 \x03(\x05\"N\n\x10\x45lectionResponse\x12\x11\n\tleader_id\x18\x01 \x01(\x05\x12\x12\n\nisComplete\x18\x02 \x01(\x08\x12\x13\n\x0bleader_time\x18\x03 \x01(\t\"G\n\x06Symbol\x12\x0b\n\x03pos\x18\x01 \x01(\x05\x12\x0c\n\x04type\x18\x02 \x01(\x05\x12\x0f\n\x07node_id\x18\x03 \x01(\x05\x12\x11\n\tnode_time\x18\x04 \x01(\t\"$\n\x0eSymbolResponse\x12\x12\n\nisComplete\x18\x01 \x01(\x08\"+\n\x05\x42oard\x12\x0f\n\x07node_id\x18\x01 \x01(\x05\x12\x11\n\tnode_time\x18\x02 \x01(\t\"2\n\rBoardResponse\x12\r\n\x05\x62oard\x18\x01 \x03(\x05\x12\x12\n\nisComplete\x18\x02 \x01(\x08\".\n\x08NodeTime\x12\x11\n\tnode_time\x18\x01 \x01(\t\x12\x0f\n\x07node_id\x18\x02 \x01(\x05\";\n\x10NodeTimeResponse\x12\x13\n\x0bmaster_time\x18\x01 \x01(\t\x12\x12\n\nisComplete\x18\x02 \x01(\x08\x32\xb1\x01\n\tTicTacToe\x12+\n\tStartGame\x12\x0b.InitParams\x1a\x11.ElectionResponse\x12%\n\tSetSymbol\x12\x07.Symbol\x1a\x0f.SymbolResponse\x12#\n\tListBoard\x12\x06.Board\x1a\x0e.BoardResponse\x12+\n\x0bSetNodeTime\x12\t.NodeTime\x1a\x11.NodeTimeResponseb\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\nnode.proto\"e\n\nInitParams\x12\x0f\n\x07n_nodes\x18\x01 \x01(\x05\x12\x0f\n\x07node_id\x18\x02 \x01(\x05\x12\x11\n\tnode_time\x18\x03 \x01(\t\x12\x10\n\x08isLeader\x18\x04 \x01(\x08\x12\x10\n\x08list_ids\x18\x05 \x03(\x05\"N\n\x10\x45lectionResponse\x12\x11\n\tleader_id\x18\x01 \x01(\x05\x12\x12\n\nisComplete\x18\x02 \x01(\x08\x12\x13\n\x0bleader_time\x18\x03 \x01(\t\"G\n\x06Symbol\x12\x0b\n\x03pos\x18\x01 \x01(\x05\x12\x0c\n\x04type\x18\x02 \x01(\x05\x12\x0f\n\x07node_id\x18\x03 \x01(\x05\x12\x11\n\tnode_time\x18\x04 \x01(\t\"$\n\x0eSymbolResponse\x12\x12\n\nisComplete\x18\x01 \x01(\x08\"+\n\x05\x42oard\x12\x0f\n\x07node_id\x18\x01 \x01(\x05\x12\x11\n\tnode_time\x18\x02 \x01(\t\"2\n\rBoardResponse\x12\r\n\x05\x62oard\x18\x01 \x03(\x05\x12\x12\n\nisComplete\x18\x02 \x01(\x08\".\n\x08NodeTime\x12\x11\n\tnode_time\x18\x01 \x01(\t\x12\x0f\n\x07node_id\x18\x02 \x01(\x05\";\n\x10NodeTimeResponse\x12\x13\n\x0bmaster_time\x18\x01 \x01(\t\x12\x12\n\nisComplete\x18\x02 \x01(\x08\"\x1b\n\x06Leader\x12\x11\n\twinner_id\x18\x01 \x01(\x05\"$\n\x0eLeaderResponse\x12\x12\n\nisComplete\x18\x02 \x01(\x08\"\x1e\n\x07TimeOut\x12\x13\n\x0bset_timeout\x18\x01 \x01(\x05\"%\n\x0fTimeoutResponse\x12\x12\n\nisComplete\x18\x01 \x01(\x08\x32\x82\x02\n\tTicTacToe\x12+\n\tStartGame\x12\x0b.InitParams\x1a\x11.ElectionResponse\x12%\n\tSetSymbol\x12\x07.Symbol\x1a\x0f.SymbolResponse\x12#\n\tListBoard\x12\x06.Board\x1a\x0e.BoardResponse\x12+\n\x0bSetNodeTime\x12\t.NodeTime\x1a\x11.NodeTimeResponse\x12%\n\tSetLeader\x12\x07.Leader\x1a\x0f.LeaderResponse\x12(\n\nSetTimeOut\x12\x08.TimeOut\x1a\x10.TimeoutResponseb\x06proto3')
 
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, globals())
 _builder.BuildTopDescriptorsAndMessages(DESCRIPTOR, 'node_pb2', globals())
@@ -36,6 +36,14 @@ if _descriptor._USE_C_DESCRIPTORS == False:
   _NODETIME._serialized_end=451
   _NODETIMERESPONSE._serialized_start=453
   _NODETIMERESPONSE._serialized_end=512
-  _TICTACTOE._serialized_start=515
-  _TICTACTOE._serialized_end=692
+  _LEADER._serialized_start=514
+  _LEADER._serialized_end=541
+  _LEADERRESPONSE._serialized_start=543
+  _LEADERRESPONSE._serialized_end=579
+  _TIMEOUT._serialized_start=581
+  _TIMEOUT._serialized_end=611
+  _TIMEOUTRESPONSE._serialized_start=613
+  _TIMEOUTRESPONSE._serialized_end=650
+  _TICTACTOE._serialized_start=653
+  _TICTACTOE._serialized_end=911
 # @@protoc_insertion_point(module_scope)

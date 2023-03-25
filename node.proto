@@ -57,7 +57,7 @@ message NodeTimeResponse{
     bool isComplete = 2;
 }
 
-message Leader(){
+message Leader{
     int32 winner_id = 1;
 }
 
