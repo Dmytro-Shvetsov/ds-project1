@@ -6,7 +6,7 @@ service TicTacToe{
     rpc SetSymbol(Symbol) returns (SymbolResponse);
     rpc ListBoard(Board) returns (BoardResponse);
     rpc SetNodeTime(NodeTime) returns (NodeTimeResponse);
-    rpc SetLeader() returns ();
+    rpc SetLeader(Leader) returns (LeaderResponse);
 }
 
 message InitParams{
