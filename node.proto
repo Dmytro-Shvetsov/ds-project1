@@ -6,6 +6,7 @@ service TicTacToe{
     rpc SetSymbol(Symbol) returns (SymbolResponse);
     rpc ListBoard(Board) returns (BoardResponse);
     rpc SetNodeTime(NodeTime) returns (NodeTimeResponse);
+    rpc SetLeader() returns ();
 }
 
 message InitParams{
@@ -52,5 +53,13 @@ message NodeTime{
 
 message NodeTimeResponse{
     string master_time = 1;
+    bool isComplete = 2;
+}
+
+message Leader(){
+    int32 winner_id = 1;
+}
+
+message LeaderResponse{
     bool isComplete = 2;
 }
