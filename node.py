@@ -13,6 +13,7 @@ BASE_PORT = 50060
 class TicTacToeServicer(node_pb2_grpc.TicTacToeServicer):
     def __init__(self, node_id) -> None:
         self.node_id = node_id
+        self.leader_id = None
 
     def StartGame(self, request, context):
         #retrive current state of node
@@ -45,6 +46,13 @@ class TicTacToeServicer(node_pb2_grpc.TicTacToeServicer):
                                                              list_ids=ids))
                 return response
 
+    def NotifyLeader(self, request, context):
+        self.leader_id = request.leader_id
+        print(f"I know that leader id is {self.leader_id}")
+
+        return node_pb2.SuccessResponse(isComplete= True)
+
+        
 class Main(cmd.Cmd):
     prompt = '> '
 
@@ -52,22 +60,23 @@ class Main(cmd.Cmd):
         super().__init__(*args, **kwargs)
         self.node_id = node_id
         self.prompt = f'Node-{node_id}> '
-        self.node_port = BASE_PORT + node_id
-
-        self.channel = grpc.insecure_channel(f"localhost:{BASE_PORT + 1}")
-        self.stub = node_pb2_grpc.TicTacToeStub(self.channel)
+        self.channels = {i:grpc.insecure_channel(f"localhost:{BASE_PORT + i}") for i in range(0, 3) if i != node_id}
+        self.stubs = {i:node_pb2_grpc.TicTacToeStub(self.channels[i]) for i in range(0, 3) if i != node_id}
 
     def do_Start_game(self, args):
         #After we Start_game, connect to the BASE_PORT(50060)(to yourself) and initiate election
-        with grpc.insecure_channel(f"localhost:{self.node_port}") as channel:
+        with grpc.insecure_channel(f"localhost:{self.node_id + BASE_PORT}") as channel:
             stub = node_pb2_grpc.TicTacToeStub(channel)
-            request = node_pb2.InitParams(n_nodes=3, node_id=self.node_port, node_time='', isLeader=False, list_ids=[])
+            request = node_pb2.InitParams(n_nodes=3, node_id=self.node_id + BASE_PORT, node_time='', isLeader=False, list_ids=[])
             response = stub.StartGame(request)
             #When the circle is completed, present a new leader
             if response.isComplete == True:
                 print(f"Now I know that the leader is {response.leader_id}")
                 print(f"Leader time is {response.leader_time}")
             print("Game started")
+
+            for k, v in self.stubs.items():
+                v.NotifyLeader(node_pb2.LeaderID(leader_id= response.leader_id))
             return response
 
     def do_Set_symbol(self, args):

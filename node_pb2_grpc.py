@@ -19,6 +19,11 @@ class TicTacToeStub(object):
                 request_serializer=node__pb2.InitParams.SerializeToString,
                 response_deserializer=node__pb2.ElectionResponse.FromString,
                 )
+        self.NotifyLeader = channel.unary_unary(
+                '/TicTacToe/NotifyLeader',
+                request_serializer=node__pb2.LeaderID.SerializeToString,
+                response_deserializer=node__pb2.SuccessResponse.FromString,
+                )
         self.SetSymbol = channel.unary_unary(
                 '/TicTacToe/SetSymbol',
                 request_serializer=node__pb2.Symbol.SerializeToString,
@@ -50,6 +55,12 @@ class TicTacToeServicer(object):
     """Missing associated documentation comment in .proto file."""
 
     def StartGame(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def NotifyLeader(self, request, context):
         """Missing associated documentation comment in .proto file."""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
@@ -92,6 +103,11 @@ def add_TicTacToeServicer_to_server(servicer, server):
                     servicer.StartGame,
                     request_deserializer=node__pb2.InitParams.FromString,
                     response_serializer=node__pb2.ElectionResponse.SerializeToString,
+            ),
+            'NotifyLeader': grpc.unary_unary_rpc_method_handler(
+                    servicer.NotifyLeader,
+                    request_deserializer=node__pb2.LeaderID.FromString,
+                    response_serializer=node__pb2.SuccessResponse.SerializeToString,
             ),
             'SetSymbol': grpc.unary_unary_rpc_method_handler(
                     servicer.SetSymbol,
@@ -142,6 +158,23 @@ class TicTacToe(object):
         return grpc.experimental.unary_unary(request, target, '/TicTacToe/StartGame',
             node__pb2.InitParams.SerializeToString,
             node__pb2.ElectionResponse.FromString,
+            options, channel_credentials,
+            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+
+    @staticmethod
+    def NotifyLeader(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(request, target, '/TicTacToe/NotifyLeader',
+            node__pb2.LeaderID.SerializeToString,
+            node__pb2.SuccessResponse.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 
