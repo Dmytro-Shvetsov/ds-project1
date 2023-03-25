@@ -7,6 +7,7 @@ service TicTacToe{
     rpc ListBoard(Board) returns (BoardResponse);
     rpc SetNodeTime(NodeTime) returns (NodeTimeResponse);
     rpc SetLeader(Leader) returns (LeaderResponse);
+    rpc SetTimeOut(TimeOut) returns (TimeoutResponse);
 }
 
 message InitParams{
@@ -62,4 +63,12 @@ message Leader(){
 
 message LeaderResponse{
     bool isComplete = 2;
+}
+
+message TimeOut{
+    int32 set_timeout = 1;
+}
+
+message TimeoutResponse{
+    bool isComplete = 1;
 }
