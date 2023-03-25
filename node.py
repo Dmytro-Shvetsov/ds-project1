@@ -63,10 +63,6 @@ class Main(cmd.Cmd):
             response = stub.StartGame(request)
             print("Game started")
             return response
-        request = node_pb2.InitParams(n_nodes=0, node_id=0,node_time='', isLeader=True, list_ids=[])
-        response = self.stub.StartGame(request)
-        print("Game started")
-        return response
 
     def do_Set_symbol(self, args):
         print("Symbol set")
