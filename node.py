@@ -1,29 +1,35 @@
 import cmd
-import tictactoe_pb2
-import tictactoe_pb2_grpc
+import node_pb2
+import node_pb2_grpc
 import threading
 import grpc
 import time
 from concurrent import futures
 import sys
 
-global stub
+BASE_PORT = 50060
 
-
-class TicTacToeServicer(tictactoe_pb2_grpc.TicTacToeServiceServicer):
+class TicTacToeServicer(node_pb2_grpc.TicTacToeServicer):
     def StartGame(self, request, context):
-        print("game started")
+        print("game started", request)
+        return node_pb2.ElectionResponse(leader_id=0, isComplete=True, leader_time='')
 
-        return tictactoe_pb2.QuickSortResponse()
 
 class Main(cmd.Cmd):
     prompt = '> '
 
+    def __init__(self, node_id, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
+        self.node_id = node_id
+        self.prompt = f'Node-{node_id}> '
 
     def do_Start_game(self, args):
-        request = tictactoe_pb2.StartGameRequest()
-        response = stub.StartGame(request)
-        print("Game started")
+        with grpc.insecure_channel(f"localhost:{BASE_PORT + 1}") as channel:
+            stub = node_pb2_grpc.TicTacToeStub(channel)
+            request = node_pb2.InitParams(n_nodes=0, node_id=0,node_time='', isLeader=True, list_ids=[])
+            response = stub.StartGame(request)
+            print("Game started")
+            return response
 
     def do_Set_symbol(self, args):
         print("Symbol set")
@@ -37,19 +43,21 @@ class Main(cmd.Cmd):
     def do_Set_time_out(self, args):
         print("Timeout set")
 
-def serve(port):
-    server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
-    tictactoe_pb2_grpc.add_TicTacToeServiceServicer_to_server(TicTacToeServicer(), server)
-    server.add_insecure_port(f"[::]:{port}")
-    server.start()
-    print(f"Server started, CONNECTED to port {port}")
 
 if __name__ == '__main__':
-    run_port = sys.argv[1]
-    target_port = sys.argv[2]
-    channel = grpc.insecure_channel(f"localhost:{run_port}")
-    stub = tictactoe_pb2_grpc.TicTacToeServiceStub(channel)
+    node_id = int(sys.argv[1])
+    run_port = BASE_PORT + node_id
+    server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
+    node_pb2_grpc.add_TicTacToeServicer_to_server(TicTacToeServicer(), server)
+    server.add_insecure_port(f'[::]:{run_port}')
+    server.start()
     print(f"Node started on port {run_port}")
-    serve(int(target_port))
-    cli = Main()
-    cli.cmdloop()
+    
+    cli = Main(node_id)
+    while True:
+        try:
+            cli.cmdloop()
+        except Exception as exc:
+            print(exc)
+            server.stop(0)
+    
