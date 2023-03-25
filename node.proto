@@ -1,0 +1,56 @@
+syntax = "proto3";
+
+
+service TicTacToe{
+    rpc StartGame(InitParams) returns (ElectionResponse);
+    rpc SetSymbol(Symbol) returns (SymbolResponse);
+    rpc ListBoard(Board) returns (BoardResponse);
+    rpc SetNodeTime(NodeTime) returns (NodeTimeResponse);
+}
+
+message InitParams{
+    int32 n_nodes = 1;
+    int32 node_id = 2;
+    string node_time = 3;
+    bool isLeader = 4;
+    repeated int32 list_ids = 5;
+
+}
+
+message ElectionResponse{
+    int32 leader_id = 1;
+    bool isComplete = 2;
+    string leader_time = 3;
+}
+
+message Symbol{
+    int32 pos = 1;
+    int32 type = 2;
+    int32 node_id = 3;
+    string node_time = 4;
+
+}
+
+message SymbolResponse{
+    bool isComplete = 1;
+}
+
+message Board{
+    int32 node_id = 1;
+    string node_time = 2;
+}
+
+message BoardResponse{
+    repeated int32 board = 1;
+    bool isComplete = 2;
+}
+
+message NodeTime{
+    string node_time = 1;
+    int32 node_id = 2;
+}
+
+message NodeTimeResponse{
+    string master_time = 1;
+    bool isComplete = 2;
+}
