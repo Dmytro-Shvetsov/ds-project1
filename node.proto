@@ -27,7 +27,7 @@ message ElectionResponse{
 
 message Symbol{
     int32 pos = 1;
-    int32 type = 2;
+    string type = 2;
     int32 node_id = 3;
     string node_time = 4;
 

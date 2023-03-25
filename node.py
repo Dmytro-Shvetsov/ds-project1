@@ -6,6 +6,7 @@ import grpc
 import time
 from concurrent import futures
 import sys
+import time
 
 BASE_PORT = 50060
 
@@ -16,6 +17,10 @@ class TicTacToeServicer(node_pb2_grpc.TicTacToeServicer):
     def StartGame(self, request, context):
         print("game started", request)
         return node_pb2.ElectionResponse(leader_id=0, isComplete=True, leader_time='')
+
+    def SetSymbol(self, request, context):
+        print("symbol set", request)
+        return node_pb2.SymbolResponse(isComplete=True)
 
 
 class Main(cmd.Cmd):
@@ -36,7 +41,11 @@ class Main(cmd.Cmd):
         return response
 
     def do_Set_symbol(self, args):
-        print("Symbol set")
+        position = args[0]
+        symbol = args[2]
+        request = node_pb2.Symbol(pos=int(position), type=symbol, node_id=0, node_time='')
+        response = self.stub.SetSymbol(request)
+        print(response)
 
     def do_List_board(self, args):
         print("Board listed")
