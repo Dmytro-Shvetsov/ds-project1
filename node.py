@@ -18,6 +18,7 @@ class TicTacToeServicer(node_pb2_grpc.TicTacToeServicer):
         self.channels = {i:grpc.insecure_channel(f"localhost:{BASE_PORT + i}") for i in range(3) if i != node_id}
         self.stubs = {i:node_pb2_grpc.TicTacToeStub(self.channels[i]) for i in range(3) if i != node_id}
         self.clock_adjust = timedelta(0)
+        self.board = [None] * 9
 
     def StartGame(self, request, context):
         #retrive current state of node
@@ -27,7 +28,11 @@ class TicTacToeServicer(node_pb2_grpc.TicTacToeServicer):
             leader_id = max(ids)
             print(f"Ring is complete. Choosing leader {leader_id}")
             leader_time = datetime.utcnow().isoformat()
-            return node_pb2.ElectionResponse(leader_id=leader_id, leader_time=leader_time)
+            response = node_pb2.ElectionResponse(leader_id=leader_id, leader_time=leader_time)
+            if self.node_id != self.leader_id:
+                Main.leader_id = response.leader_id
+            return response
+
         else:
             #if not -> we append the port of the current node to the list. Pass this list to the next node.
             ids.append(node_id)
@@ -35,6 +40,8 @@ class TicTacToeServicer(node_pb2_grpc.TicTacToeServicer):
             next_node_id = (self.node_id + 1) % 3
             #connecting to the next node, pass the list of ids
             response = self.stubs[next_node_id].StartGame(node_pb2.InitParams(list_ids=ids))
+            if self.node_id != self.leader_id:
+                Main.leader_id = response.leader_id
             return response
 
     def NotifyLeader(self, request, context):
@@ -76,12 +83,17 @@ class TicTacToeServicer(node_pb2_grpc.TicTacToeServicer):
 
     def SetSymbol(self, request, context):
         print("symbol set", request)
+        print(self.board)
+        if self.board[request.pos] is not None:
+            return node_pb2.SymbolResponse(isComplete=False)
+        self.board[request.pos] = request.type
+        print(self.board)
         return node_pb2.SymbolResponse(isComplete=True)
 
 
 class Main(cmd.Cmd):
     prompt = '> '
-
+    leader_id = None
     def __init__(self, node_id, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         self.node_id = node_id
@@ -105,7 +117,9 @@ class Main(cmd.Cmd):
         position = args[0]
         symbol = args[2]
         request = node_pb2.Symbol(pos=int(position), type=symbol, node_id=0, node_time='')
-        response = self.stub.SetSymbol(request)
+        response = self.stubs[Main.leader_id].SetSymbol(request)
+        if not response.isComplete:
+            print("Try again...")
         print(response)
 
     def do_List_board(self, args):
