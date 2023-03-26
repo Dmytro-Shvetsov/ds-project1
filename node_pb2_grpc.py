@@ -31,7 +31,7 @@ class TicTacToeStub(object):
                 )
         self.ListBoard = channel.unary_unary(
                 '/TicTacToe/ListBoard',
-                request_serializer=node__pb2.Board.SerializeToString,
+                request_serializer=node__pb2.Empty.SerializeToString,
                 response_deserializer=node__pb2.BoardResponse.FromString,
                 )
         self.SetLeader = channel.unary_unary(
@@ -127,7 +127,7 @@ def add_TicTacToeServicer_to_server(servicer, server):
             ),
             'ListBoard': grpc.unary_unary_rpc_method_handler(
                     servicer.ListBoard,
-                    request_deserializer=node__pb2.Board.FromString,
+                    request_deserializer=node__pb2.Empty.FromString,
                     response_serializer=node__pb2.BoardResponse.SerializeToString,
             ),
             'SetLeader': grpc.unary_unary_rpc_method_handler(
@@ -223,7 +223,7 @@ class TicTacToe(object):
             timeout=None,
             metadata=None):
         return grpc.experimental.unary_unary(request, target, '/TicTacToe/ListBoard',
-            node__pb2.Board.SerializeToString,
+            node__pb2.Empty.SerializeToString,
             node__pb2.BoardResponse.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)

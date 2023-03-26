@@ -19,6 +19,9 @@ class TicTacToeServicer(node_pb2_grpc.TicTacToeServicer):
         self.stubs = {i:node_pb2_grpc.TicTacToeStub(self.channels[i]) for i in range(3) if i != node_id}
         self.clock_adjust = timedelta(0)
         self.board = [None] * 9
+        self.turn_timestamps = [None] * 9
+        self.current_turn = None
+        self.game_finished = False
 
     def StartGame(self, request, context):
         #retrive current state of node
@@ -82,13 +85,43 @@ class TicTacToeServicer(node_pb2_grpc.TicTacToeServicer):
         return diffs
 
     def SetSymbol(self, request, context):
-        print("symbol set", request)
-        print(self.board)
+        timestamp = datetime.utcnow() + self.clock_adjust
+        print(f"Symbol set request {request.type} at time {timestamp}")
         if self.board[request.pos] is not None:
-            return node_pb2.SymbolResponse(isComplete=False)
+            return node_pb2.SymbolResponse(isComplete=False, message='Position is occupied, choose a different one.')
+        if request.type not in {'X', 'O'}:
+            return node_pb2.SymbolResponse(isComplete=False, message=f'Invalid symbol specified. Supported are X or O. You provided: {request.type}')
+        if self.current_turn is not None and self.current_turn != request.type:
+            return node_pb2.SymbolResponse(isComplete=False, message=f'It\'s not your turn, please wait for the opponent ({self.current_turn}) to make a move.')
+        self.turn_timestamps[request.pos] = timestamp
         self.board[request.pos] = request.type
-        print(self.board)
-        return node_pb2.SymbolResponse(isComplete=True)
+        self.current_turn = 'X' if request.type == 'O' else 'O'
+        print('Updated the board:', self._format_board())
+        if self._check_winner(request.type):
+            # todo: reset game here
+            self.game_finished = True
+            return node_pb2.SymbolResponse(isComplete=True, message='Congratulations, you won!')
+        return node_pb2.SymbolResponse(isComplete=True, message='You made your turn.')
+
+    def _check_winner(self, type):
+        rows = [[0, 1, 2], [3, 4, 5], [6, 7, 8]]
+        cols = [[0, 3, 6], [1, 4, 7], [2, 5, 8]]
+        diagonals = [[0, 4, 8], [2, 4, 6]]
+        if any(all(self.board[i] == type for i in seq) for seq in rows):
+            print('Winner by rows.')
+            return True
+        if any(all(self.board[i] == type for i in seq) for seq in cols):
+            print('Winner by cols.')
+            return True
+        if any(all(self.board[i] == type for i in seq) for seq in diagonals):
+            print('Winner by diagonals.')
+            return True
+
+    def ListBoard(self, request, context):
+        return node_pb2.BoardResponse(board=self._format_board(), isComplete=self.game_finished)
+
+    def _format_board(self):
+        return ', '.join((self.board[i] + ':' + str(self.turn_timestamps[i]) if self.board[i] else 'empty') for i in range(9))
 
 
 class Main(cmd.Cmd):
@@ -114,16 +147,23 @@ class Main(cmd.Cmd):
         return response
 
     def do_Set_symbol(self, args):
+        print(args)
         position = args[0]
         symbol = args[2]
         request = node_pb2.Symbol(pos=int(position), type=symbol, node_id=0, node_time='')
         response = self.stubs[Main.leader_id].SetSymbol(request)
         if not response.isComplete:
-            print("Try again...")
-        print(response)
+            print(f"Unable to make a move: {response.message}")
+        else:
+            print('Placed a symbol:', response.message)
 
     def do_List_board(self, args):
-        print("Board listed")
+        if self.leader_id is None:
+            print('Game is not started. Leader id is unknown')
+            return
+        response = self.stubs[Main.leader_id].ListBoard(node_pb2.Empty())
+        print(f'Game is finished: {response.isComplete}. Board: {response.board}')
+        return response
 
     def do_Set_node_time(self, args):
         print("Node time set")

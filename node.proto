@@ -5,7 +5,7 @@ service TicTacToe{
     rpc StartGame(InitParams) returns (ElectionResponse);
     rpc NotifyLeader(LeaderID) returns (SuccessResponse);
     rpc SetSymbol(Symbol) returns (SymbolResponse);
-    rpc ListBoard(Board) returns (BoardResponse);
+    rpc ListBoard(Empty) returns (BoardResponse);
     rpc SetLeader(Leader) returns (LeaderResponse);
     rpc SetTimeOut(TimeOut) returns (TimeoutResponse);
     rpc RequestTime(Empty) returns (NodeTime);
@@ -41,15 +41,11 @@ message Symbol{
 
 message SymbolResponse{
     bool isComplete = 1;
-}
-
-message Board{
-    int32 node_id = 1;
-    string node_time = 2;
+    string message = 2;
 }
 
 message BoardResponse{
-    repeated int32 board = 1;
+    string board = 1;
     bool isComplete = 2;
 }
 
