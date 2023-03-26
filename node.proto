@@ -7,14 +7,17 @@ service TicTacToe{
     rpc SetSymbol(Symbol) returns (SymbolResponse);
     rpc ListBoard(Empty) returns (BoardResponse);
     rpc SetLeader(Leader) returns (LeaderResponse);
-    rpc SetTimeOut(TimeOut) returns (TimeoutResponse);
     rpc RequestTime(Empty) returns (NodeTime);
     rpc SetTimeDiff(TimeDiff) returns (Empty);
     rpc NotifyWinner(Winner) returns (Empty);
-    rpc SetTime(Time) returns (Empty);
+    rpc NotifyTimeout(TimeoutMessage) returns (Empty);
 }
 
 message Empty {}
+
+message TimeoutMessage {
+    string message = 1;
+}
 
 message InitParams{
     repeated int32 list_ids = 1;

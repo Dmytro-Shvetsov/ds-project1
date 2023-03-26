@@ -23,6 +23,9 @@ class TicTacToeServicer(node_pb2_grpc.TicTacToeServicer):
         self.current_turn = None
         self.game_finished = False
         self.winner_id = None
+        self.timeout_players = timedelta(seconds=60)
+        self.last_request_timing = {'X': None, 'O': None}
+        self.timeout_worker = None
 
     def StartGame(self, request, context):
         #retrive current state of node
@@ -36,7 +39,6 @@ class TicTacToeServicer(node_pb2_grpc.TicTacToeServicer):
             if self.node_id != self.leader_id:
                 Main.leader_id = response.leader_id
             return response
-
         else:
             #if not -> we append the port of the current node to the list. Pass this list to the next node.
             ids.append(node_id)
@@ -48,12 +50,34 @@ class TicTacToeServicer(node_pb2_grpc.TicTacToeServicer):
                 Main.leader_id = response.leader_id
             return response
 
+    def _timeout_runner(self):
+        while not self.game_finished:
+            timestamp = datetime.utcnow()
+            for k, ts in self.last_request_timing.items():
+                if ts is None:
+                    continue
+                diff = timestamp - ts
+                if diff > self.timeout_players:
+                    for stub in self.stubs.values():
+                        stub.NotifyTimeout(node_pb2.TimeoutMessage(message=f'Player {k} is idle for {diff.total_seconds()}. Reseting the game.'))
+                    self._reset()
+                    return node_pb2.Empty()
+            time.sleep(0.2)
+        return node_pb2.Empty()
+
+    def NotifyTimeout(self, request, context):
+        print(f'Timeout notification: {request.message}. Please start the game again to proceed.')
+        self._reset()
+        return node_pb2.Empty()
+
     def NotifyLeader(self, request, context):
         self.leader_id = request.leader_id
         print(f"I know that leader id is {self.leader_id}")
         if self.leader_id == self.node_id:
             self.synchronize_clocks()
-
+            self.timeout_worker = threading.Thread(target=self._timeout_runner)
+            self.timeout_worker.start()
+            print('Started timeout worker.')
         return node_pb2.SuccessResponse(isComplete=True)
 
     def NotifyWinner(self, request, context):
@@ -121,13 +145,14 @@ class TicTacToeServicer(node_pb2_grpc.TicTacToeServicer):
         
         self.turn_timestamps[request.pos] = timestamp
         self.board[request.pos] = request.type
+        self.last_request_timing[self.current_turn] = None
         self.current_turn = 'X' if request.type == 'O' else 'O'
+        self.last_request_timing[self.current_turn] = timestamp
         board = node_pb2.BoardResponse(board= self._format_board(), 
                                        isComplete= True)
-        
+
         print('Updated the board:', self._format_board())
         if self._check_winner(request.type):
-            # todo: reset game here
             self.game_finished = True
             for k, stub in self.stubs.items():
                 response = stub.NotifyWinner(node_pb2.Winner(winner= request.type))
@@ -144,7 +169,13 @@ class TicTacToeServicer(node_pb2_grpc.TicTacToeServicer):
         self.winner_id = None
         self.leader_id = None
         Main.leader_id = None
-        
+        self.last_request_timing = {'X': None, 'O': None}
+        if self.timeout_worker:
+            if self.timeout_worker.is_alive():
+                self.timeout_worker.join()
+            print('Timeout worker is finished.')
+            self.timeout_worker = None
+
     def _check_winner(self, type):
         rows = [[0, 1, 2], [3, 4, 5], [6, 7, 8]]
         cols = [[0, 3, 6], [1, 4, 7], [2, 5, 8]]
