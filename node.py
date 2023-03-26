@@ -168,14 +168,8 @@ class TicTacToeServicer(node_pb2_grpc.TicTacToeServicer):
         self.winner_id = None
         self.leader_id = None
         Main.leader_id = None
-        self.last_request_timing = {'X': None, 'O': None}
-        if self.timeout_worker:
-            self.game_finished = True
-            if self.timeout_worker.is_alive():
-                self.timeout_worker.join()
-            print('Timeout worker is finished.')
-            self.timeout_worker = None
         self.game_finished = False
+        self.last_request_timing = {'X': None, 'O': None}
 
     def _check_winner(self, type):
         rows = [[0, 1, 2], [3, 4, 5], [6, 7, 8]]
@@ -241,7 +235,6 @@ class Main(cmd.Cmd):
         if response.isComplete and not response.isFinished:
             print('Placed a symbol:', response.message)
             print('Board: \n', response.board)
-
 
     def do_List_board(self, args):
         if Main.leader_id == None:
