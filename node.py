@@ -165,16 +165,17 @@ class TicTacToeServicer(node_pb2_grpc.TicTacToeServicer):
         self.board = [None] * 9
         self.turn_timestamps = [None] * 9
         self.current_turn = None
-        self.game_finished = False
         self.winner_id = None
         self.leader_id = None
         Main.leader_id = None
         self.last_request_timing = {'X': None, 'O': None}
         if self.timeout_worker:
+            self.game_finished = True
             if self.timeout_worker.is_alive():
                 self.timeout_worker.join()
             print('Timeout worker is finished.')
             self.timeout_worker = None
+        self.game_finished = False
 
     def _check_winner(self, type):
         rows = [[0, 1, 2], [3, 4, 5], [6, 7, 8]]
@@ -195,6 +196,14 @@ class TicTacToeServicer(node_pb2_grpc.TicTacToeServicer):
 
     def _format_board(self):
         return ', '.join((self.board[i] + ':' + str(self.turn_timestamps[i]) if self.board[i] else 'empty') for i in range(9))
+
+    def SetTimeoutTime(self, request, context):
+        if self.leader_id != request.node_id:
+            return node_pb2.TimeoutMessage(message='You are not a leader to perfrom this action.')
+        if request.target != 'players':
+            return node_pb2.TimeoutMessage(message='Unsupported target to set time out.')
+        self.timeout_players = timedelta(seconds=request.time_seconds)
+        return node_pb2.TimeoutMessage(message='Successfully set time out.')
 
 
 class Main(cmd.Cmd):
@@ -223,7 +232,6 @@ class Main(cmd.Cmd):
         if Main.leader_id == None:
             return print("Start the game before making moves")
     
-        print(args)
         position = args[0]
         symbol = args[2]
         request = node_pb2.Symbol(pos=int(position), type=symbol, node_id=self.node_id, node_time='')
@@ -245,14 +253,12 @@ class Main(cmd.Cmd):
         print(f'Game is finished: {response.isComplete}. Board: {response.board}')
         return response
 
-    def do_Set_node_time(self, args):
-        if Main.leader_id == None:
-            return print("Start the game before making moves")
-
     def do_Set_time_out(self, args):
         if Main.leader_id == None:
             return print("Start the game before making moves")
-        print("Timeout set")
+        args = args.split(' ')
+        response = self.stubs[Main.leader_id].SetTimeoutTime(node_pb2.TimeoutSetRequest(target=args[0], time_seconds=int(args[1]), node_id=self.node_id))
+        print(response.message)
 
 
 if __name__ == '__main__':

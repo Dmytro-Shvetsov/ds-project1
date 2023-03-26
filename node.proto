@@ -11,12 +11,19 @@ service TicTacToe{
     rpc SetTimeDiff(TimeDiff) returns (Empty);
     rpc NotifyWinner(Winner) returns (Empty);
     rpc NotifyTimeout(TimeoutMessage) returns (Empty);
+    rpc SetTimeoutTime(TimeoutSetRequest) returns (TimeoutMessage);
 }
 
 message Empty {}
 
 message TimeoutMessage {
     string message = 1;
+}
+
+message TimeoutSetRequest {
+    string target = 1;
+    int32 time_seconds = 2;
+    int32 node_id = 3;
 }
 
 message InitParams{
