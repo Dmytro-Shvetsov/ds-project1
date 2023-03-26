@@ -10,6 +10,8 @@ service TicTacToe{
     rpc SetTimeOut(TimeOut) returns (TimeoutResponse);
     rpc RequestTime(Empty) returns (NodeTime);
     rpc SetTimeDiff(TimeDiff) returns (Empty);
+    rpc NotifyWinner(Winner) returns (Empty);
+    rpc SetTime(Time) returns (Empty);
 }
 
 message Empty {}
@@ -36,12 +38,13 @@ message Symbol{
     string type = 2;
     int32 node_id = 3;
     string node_time = 4;
-
 }
 
 message SymbolResponse{
     bool isComplete = 1;
     string message = 2;
+    BoardResponse board = 5;
+    bool isFinished = 6;
 }
 
 message BoardResponse{
@@ -72,4 +75,8 @@ message TimeOut{
 
 message TimeoutResponse{
     bool isComplete = 1;
+}
+
+message Winner{
+    string winner = 1;
 }

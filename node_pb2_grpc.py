@@ -54,6 +54,11 @@ class TicTacToeStub(object):
                 request_serializer=node__pb2.TimeDiff.SerializeToString,
                 response_deserializer=node__pb2.Empty.FromString,
                 )
+        self.NotifyWinner = channel.unary_unary(
+                '/TicTacToe/NotifyWinner',
+                request_serializer=node__pb2.Winner.SerializeToString,
+                response_deserializer=node__pb2.Empty.FromString,
+                )
 
 
 class TicTacToeServicer(object):
@@ -107,6 +112,12 @@ class TicTacToeServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
+    def NotifyWinner(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
 
 def add_TicTacToeServicer_to_server(servicer, server):
     rpc_method_handlers = {
@@ -148,6 +159,11 @@ def add_TicTacToeServicer_to_server(servicer, server):
             'SetTimeDiff': grpc.unary_unary_rpc_method_handler(
                     servicer.SetTimeDiff,
                     request_deserializer=node__pb2.TimeDiff.FromString,
+                    response_serializer=node__pb2.Empty.SerializeToString,
+            ),
+            'NotifyWinner': grpc.unary_unary_rpc_method_handler(
+                    servicer.NotifyWinner,
+                    request_deserializer=node__pb2.Winner.FromString,
                     response_serializer=node__pb2.Empty.SerializeToString,
             ),
     }
@@ -292,6 +308,23 @@ class TicTacToe(object):
             metadata=None):
         return grpc.experimental.unary_unary(request, target, '/TicTacToe/SetTimeDiff',
             node__pb2.TimeDiff.SerializeToString,
+            node__pb2.Empty.FromString,
+            options, channel_credentials,
+            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+
+    @staticmethod
+    def NotifyWinner(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(request, target, '/TicTacToe/NotifyWinner',
+            node__pb2.Winner.SerializeToString,
             node__pb2.Empty.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
